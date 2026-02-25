@@ -1,0 +1,128 @@
+<!-- catalog/templates/catalog/index.html -->
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaunaMart — Каталог товаров для животных</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'catalog/css/style.css' %}">
+</head>
+<body>
+    <header>
+        <div class="logo">FaunaMart</div>
+        <div>
+            Корзина (<span id="cart-count">{{ cart_count }}</span>)
+            <button onclick="document.getElementById('cart-modal').style.display='block'" class="cart-button">
+                Открыть корзину
+            </button>
+        </div>
+    </header>
+
+    <nav>
+        <a href="?animal=all&category={{ selected_category }}" 
+           class="{% if selected_animal == 'all' or not selected_animal %}active{% endif %}">
+            Все животные
+        </a>
+        {% for animal in animals %}
+        <a href="?animal={{ animal.id }}&category={{ selected_category }}" 
+           class="{% if selected_animal == animal.id|stringformat:'s' %}active{% endif %}">
+            {{ animal.name }}
+        </a>
+        {% endfor %}
+    </nav>
+
+    <main>
+        <aside>
+            <h3>Фильтры</h3>
+            <div class="filter-group">
+                <h4>Категория товаров</h4>
+                <div>
+                    <a href="?category=all&animal={{ selected_animal }}" 
+                       class="filter-link {% if not selected_category or selected_category == 'all' %}active-filter{% endif %}">
+                        Все категории
+                    </a>
+                </div>
+                {% for category in categories %}
+                <div>
+                    <a href="?category={{ category.id }}&animal={{ selected_animal }}"
+                       class="filter-link {% if selected_category == category.id|stringformat:'s' %}active-filter{% endif %}">
+                        {{ category.name }}
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <a href="?" class="reset-button">Сбросить фильтры</a>
+        </aside>
+
+        <section>
+            <h2>Каталог товаров</h2>
+            <div class="products-grid">
+                {% for product in products %}
+                <div class="product-card">
+                    <h3>{{ product.name }}</h3>
+                    <p>{{ product.animal.name }} • {{ product.category.name }}</p>
+                    <p class="product-price">{{ product.price }} ₽</p>
+                    <a href="{% url 'add_to_cart' product.id %}?next={{ request.get_full_path|urlencode }}" class="product-button">
+                        <button>В корзину</button>
+                    </a>
+                </div>
+                {% empty %}
+                <p class="empty-message">
+                    Товары не найдены
+                </p>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <div id="cart-modal" class="cart-modal">
+        <div class="cart-header">
+            <h2>Ваша корзина</h2>
+            <button onclick="document.getElementById('cart-modal').style.display='none'" class="close-button">&times;</button>
+        </div>
+        
+        <div id="cart-items">
+            {% if cart %}
+                {% for item in cart %}
+                    {% with product=item.product %}
+                    <div class="cart-item">
+                        <p><strong>{{ product.name }}</strong></p>
+                        <p>Цена: {{ product.price }} ₽</p>
+                        <p>Количество: {{ item.quantity }}</p>
+                        <p class="item-total">Сумма: {% widthratio product.price 1 item.quantity %} ₽</p>
+                        <a href="{% url 'remove_from_cart' product.id %}?next={{ request.get_full_path|urlencode }}" class="remove-button">
+                            <button>Удалить</button>
+                        </a>
+                    </div>
+                    {% endwith %}
+                {% endfor %}
+                
+                <div class="cart-total">
+                    Итого: {{ cart_total }} ₽
+                </div>
+                
+                <a href="{% url 'clear_cart' %}?next={{ request.get_full_path|urlencode }}" class="checkout-button">
+                    <button>Оформить заказ</button>
+                </a>
+            {% else %}
+                <p class="empty-cart">Корзина пуста</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer>
+        <p>Учебный проект. Виртуальная корзина, без реальной оплаты.</p>
+    </footer>
+
+    <script>
+        window.onclick = function(event) {
+            const modal = document.getElementById('cart-modal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
