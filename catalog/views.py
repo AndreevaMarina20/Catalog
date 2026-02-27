@@ -1,14 +1,12 @@
-# catalog/views.py
-
 from django.shortcuts import render
-from django.http import HttpResponseRedirect
-from django.urls import reverse
+from django.http import HttpResponseRedirect, JsonResponse
 from .models import Product, Animal, Category
 
 def index(request):
     # Получаем параметры фильтрации из GET-запроса
     animal_id = request.GET.get('animal')
     category_id = request.GET.get('category')
+    sort_by = request.GET.get('sort', 'default')
     
     # Базовый запрос всех товаров
     products = Product.objects.all().select_related('animal', 'category')
@@ -19,6 +17,16 @@ def index(request):
     
     if category_id and category_id != 'all':
         products = products.filter(category_id=category_id)
+    
+    # Применяем сортировку
+    if sort_by == 'price_asc':
+        products = products.order_by('price')
+    elif sort_by == 'price_desc':
+        products = products.order_by('-price')
+    elif sort_by == 'name_asc':
+        products = products.order_by('name')
+    elif sort_by == 'name_desc':
+        products = products.order_by('-name')
     
     # Получаем все категории и животных для фильтров
     animals = Animal.objects.all()
@@ -43,7 +51,7 @@ def index(request):
             cart_count += item['quantity']
             cart_total += product.price * item['quantity']
         except Product.DoesNotExist:
-            continue  # Если товар удален из базы, пропускаем
+            continue
     
     context = {
         'products': products,
@@ -54,12 +62,13 @@ def index(request):
         'cart_total': cart_total,
         'selected_animal': animal_id,
         'selected_category': category_id,
+        'sort_by': sort_by,
     }
     
     return render(request, 'catalog/index.html', context)
 
+
 def add_to_cart(request, product_id):
-    """Добавление товара в корзину"""
     cart = request.session.get('cart', [])
     
     # Проверяем, есть ли уже такой товар
@@ -79,8 +88,18 @@ def add_to_cart(request, product_id):
     request.session['cart'] = cart
     request.session.modified = True
     
-    # Возвращаемся туда, откуда пришли
+    # Подсчитываем общее количество товаров
+    cart_count = sum(item['quantity'] for item in cart)
+    
+    # Если это AJAX-запрос, возвращаем JSON
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'cart_count': cart_count
+        })
+    
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
 
 def remove_from_cart(request, product_id):
     """Удаление товара из корзины"""
@@ -94,8 +113,17 @@ def remove_from_cart(request, product_id):
     
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
+
 def clear_cart(request):
     """Очистка корзины"""
     request.session['cart'] = []
     request.session.modified = True
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+
+def get_cart_items(request):
+    """Возвращает список ID товаров в корзине"""
+    cart = request.session.get('cart', [])
+    return JsonResponse({
+        'items': [{'id': item['id'], 'quantity': item['quantity']} for item in cart]
+    })
