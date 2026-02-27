@@ -12,8 +12,9 @@ aside { width: 250px; border-right: 1px solid #ccc; padding-right: 20px; }
 .filter-group div { margin: 5px 0; }
 .products-grid { 
     display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+    grid-template-columns: repeat(4, 1fr); 
     gap: 20px; 
+    width: 100%;
 }
 .product-card { 
     border: 1px solid #ddd; 
@@ -39,7 +40,9 @@ aside { width: 250px; border-right: 1px solid #ccc; padding-right: 20px; }
 }
 footer { background: #f0f0f0; text-align: center; padding: 10px; margin-top: auto; }
 
+/* Корзина */
 .cart-modal { 
+    display: none;
     position: fixed; 
     top: 0; 
     right: 0; 
@@ -77,6 +80,8 @@ footer { background: #f0f0f0; text-align: center; padding: 10px; margin-top: aut
     font-weight: bold;
     margin: 20px 0;
 }
+
+/* Фильтры */
 .filter-link {
     text-decoration: none;
     color: #333;
@@ -95,6 +100,8 @@ footer { background: #f0f0f0; text-align: center; padding: 10px; margin-top: aut
     border-radius: 4px;
     border: 1px solid #ccc;
 }
+
+/* Кнопки */
 .cart-button {
     margin-left: 10px;
     padding: 5px 10px;

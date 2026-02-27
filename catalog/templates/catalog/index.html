@@ -21,12 +21,12 @@
     </header>
 
     <nav>
-        <a href="?animal=all&category={{ selected_category }}" 
+        <a href="?animal=all{% if selected_category and selected_category != 'all' %}&category={{ selected_category }}{% endif %}" 
            class="{% if selected_animal == 'all' or not selected_animal %}active{% endif %}">
             Все животные
         </a>
         {% for animal in animals %}
-        <a href="?animal={{ animal.id }}&category={{ selected_category }}" 
+        <a href="?animal={{ animal.id }}{% if selected_category and selected_category != 'all' %}&category={{ selected_category }}{% endif %}" 
            class="{% if selected_animal == animal.id|stringformat:'s' %}active{% endif %}">
             {{ animal.name }}
         </a>
@@ -39,14 +39,14 @@
             <div class="filter-group">
                 <h4>Категория товаров</h4>
                 <div>
-                    <a href="?category=all&animal={{ selected_animal }}" 
+                    <a href="?category=all{% if selected_animal and selected_animal != 'all' %}&animal={{ selected_animal }}{% endif %}" 
                        class="filter-link {% if not selected_category or selected_category == 'all' %}active-filter{% endif %}">
                         Все категории
                     </a>
                 </div>
                 {% for category in categories %}
                 <div>
-                    <a href="?category={{ category.id }}&animal={{ selected_animal }}"
+                    <a href="?category={{ category.id }}{% if selected_animal and selected_animal != 'all' %}&animal={{ selected_animal }}{% endif %}"
                        class="filter-link {% if selected_category == category.id|stringformat:'s' %}active-filter{% endif %}">
                         {{ category.name }}
                     </a>
