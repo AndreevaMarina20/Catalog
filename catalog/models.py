@@ -1,10 +1,7 @@
-# catalog/models.py
-
 from django.db import models
 
 class Animal(models.Model):
     name = models.CharField(max_length=50, verbose_name="Название")
-    icon = models.CharField(max_length=50, blank=True, verbose_name="Иконка")
     
     class Meta:
         verbose_name = "Животное"
