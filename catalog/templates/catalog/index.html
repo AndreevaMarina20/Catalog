@@ -60,16 +60,42 @@
             <h2>Каталог товаров</h2>
             <div class="products-grid">
                 {% for product in products %}
-                <div class="product-card">
-                    <h3>{{ product.name }}</h3>
-                    <p>{{ product.animal.name }} • {{ product.category.name }}</p>
-                    <p class="product-price">{{ product.price }} ₽</p>
-                    <a href="{% url 'add_to_cart' product.id %}?next={{ request.get_full_path|urlencode }}" class="product-button">
-                        <button>В корзину</button>
-                    </a>
+                <div class="product-card" style="position: relative; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    
+                    <!-- ФОТО ТОВАРА -->
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width: 100%; height: 180px; object-fit: cover; border-bottom: 1px solid #eee;">
+                    {% else %}
+                        <div style="width: 100%; height: 180px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #eee;">
+                            <span style="color: #999;">Нет фото</span>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- БЕЙДЖ (если есть) -->
+                    {% if product.badge %}
+                        <div style="position: absolute; top: 10px; right: 10px; background: #4CAF50; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; z-index: 10;">
+                            {{ product.badge }}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- ИНФОРМАЦИЯ О ТОВАРЕ -->
+                    <div style="padding: 15px;">
+                        <h3 style="margin: 0 0 8px 0; font-size: 1.2rem;">{{ product.name }}</h3>
+                        <p style="margin: 0 0 10px 0; color: #666; font-size: 0.9rem;">
+                            {{ product.animal.name }} • {{ product.category.name }}
+                        </p>
+                        <p style="font-size: 1.3rem; font-weight: bold; color: #2E7D32; margin: 0 0 15px 0;">
+                            {{ product.price }} ₽
+                        </p>
+                        <a href="{% url 'add_to_cart' product.id %}?next={{ request.get_full_path|urlencode }}" style="text-decoration: none;">
+                            <button style="width: 100%; padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.3s;">
+                                В корзину
+                            </button>
+                        </a>
+                    </div>
                 </div>
                 {% empty %}
-                <p class="empty-message">
+                <p class="empty-message" style="grid-column: 1/-1; text-align: center; padding: 50px; color: #666;">
                     Товары не найдены
                 </p>
                 {% endfor %}
@@ -77,47 +103,50 @@
         </section>
     </main>
 
-    <div id="cart-modal" class="cart-modal">
-        <div class="cart-header">
-            <h2>Ваша корзина</h2>
-            <button onclick="document.getElementById('cart-modal').style.display='none'" class="close-button">&times;</button>
+    <div id="cart-modal" class="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 400px; height: 100vh; background: white; box-shadow: -2px 0 10px rgba(0,0,0,0.1); z-index: 2000; overflow-y: auto;">
+        <div style="background: #4CAF50; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0;">Ваша корзина</h2>
+            <button onclick="document.getElementById('cart-modal').style.display='none'" style="background: none; border: none; color: white; font-size: 2rem; cursor: pointer;">&times;</button>
         </div>
         
-        <div id="cart-items">
+        <div style="padding: 20px;">
             {% if cart %}
                 {% for item in cart %}
                     {% with product=item.product %}
-                    <div class="cart-item">
-                        <p><strong>{{ product.name }}</strong></p>
-                        <p>Цена: {{ product.price }} ₽</p>
-                        <p>Количество: {{ item.quantity }}</p>
-                        <p class="item-total">Сумма: {% widthratio product.price 1 item.quantity %} ₽</p>
-                        <a href="{% url 'remove_from_cart' product.id %}?next={{ request.get_full_path|urlencode }}" class="remove-button">
-                            <button>Удалить</button>
+                    <div style="border-bottom: 1px solid #eee; padding: 15px 0;">
+                        <p style="margin: 0 0 5px 0;"><strong>{{ product.name }}</strong></p>
+                        <p style="margin: 0 0 5px 0;">Цена: {{ product.price }} ₽</p>
+                        <p style="margin: 0 0 5px 0;">Количество: {{ item.quantity }}</p>
+                        <p style="margin: 0 0 10px 0; font-weight: bold; color: #4CAF50;">
+                            Сумма: {% widthratio product.price 1 item.quantity %} ₽
+                        </p>
+                        <a href="{% url 'remove_from_cart' product.id %}?next={{ request.get_full_path|urlencode }}" style="text-decoration: none;">
+                            <button style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Удалить</button>
                         </a>
                     </div>
                     {% endwith %}
                 {% endfor %}
                 
-                <div class="cart-total">
+                <div style="font-size: 1.3rem; font-weight: bold; margin: 20px 0; text-align: right;">
                     Итого: {{ cart_total }} ₽
                 </div>
                 
-                <a href="{% url 'clear_cart' %}?next={{ request.get_full_path|urlencode }}" class="checkout-button">
-                    <button>Оформить заказ</button>
+                <a href="{% url 'clear_cart' %}?next={{ request.get_full_path|urlencode }}" style="text-decoration: none;">
+                    <button style="width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 6px; font-size: 1.1rem; font-weight: 600; cursor: pointer;">
+                        Оформить заказ
+                    </button>
                 </a>
             {% else %}
-                <p class="empty-cart">Корзина пуста</p>
+                <p style="text-align: center; padding: 40px; color: #666;">Корзина пуста</p>
             {% endif %}
         </div>
     </div>
 
-    <footer>
-        <p>Учебный проект. Виртуальная корзина, без реальной оплаты.</p>
+    <footer style="background: #333; color: white; text-align: center; padding: 20px; margin-top: auto;">
+        <p style="margin: 0;">Учебный проект. Виртуальная корзина, без реальной оплаты.</p>
     </footer>
 
     <script>
-        // Закрытие корзины при клике вне её
         window.onclick = function(event) {
             const modal = document.getElementById('cart-modal');
             if (event.target == modal) {
