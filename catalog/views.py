@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, JsonResponse
 from .models import Product, Animal, Category
 
@@ -68,6 +68,39 @@ def index(request):
     return render(request, 'catalog/index.html', context)
 
 
+def product_detail(request, product_id):
+    """Страница детального просмотра товара"""
+    product = Product.objects.get(id=product_id)
+    
+    # Корзина
+    cart_data = request.session.get('cart', [])
+    cart_items = []
+    cart_count = 0
+    cart_total = 0
+    
+    for item in cart_data:
+        try:
+            p = Product.objects.get(id=item['id'])
+            cart_items.append({
+                'id': p.id,
+                'product': p,
+                'quantity': item['quantity']
+            })
+            cart_count += item['quantity']
+            cart_total += p.price * item['quantity']
+        except Product.DoesNotExist:
+            continue
+    
+    context = {
+        'product': product,
+        'cart': cart_items,
+        'cart_count': cart_count,
+        'cart_total': cart_total,
+    }
+    
+    return render(request, 'catalog/product_detail.html', context)
+
+
 def add_to_cart(request, product_id):
     cart = request.session.get('cart', [])
     
@@ -127,3 +160,89 @@ def get_cart_items(request):
     return JsonResponse({
         'items': [{'id': item['id'], 'quantity': item['quantity']} for item in cart]
     })
+
+
+# ========== НОВЫЕ ФУНКЦИИ ==========
+
+def checkout(request):
+    """Страница оформления заказа"""
+    # Корзина
+    cart_data = request.session.get('cart', [])
+    cart_items = []
+    cart_count = 0
+    cart_total = 0
+    
+    for item in cart_data:
+        try:
+            product = Product.objects.get(id=item['id'])
+            cart_items.append({
+                'id': product.id,
+                'product': product,
+                'quantity': item['quantity']
+            })
+            cart_count += item['quantity']
+            cart_total += product.price * item['quantity']
+        except Product.DoesNotExist:
+            continue
+    
+    context = {
+        'cart': cart_items,
+        'cart_count': cart_count,
+        'cart_total': cart_total,
+    }
+    
+    return render(request, 'catalog/checkout.html', context)
+
+
+def place_order(request):
+    """Обработка отправки заказа"""
+    if request.method == 'POST':
+        # Получаем данные из формы
+        name = request.POST.get('name')
+        phone = request.POST.get('phone')
+        email = request.POST.get('email')
+        address = request.POST.get('address')
+        
+        # Считаем сумму заказа ДО очистки корзины
+        cart_data = request.session.get('cart', [])
+        total = 0
+        for item in cart_data:
+            try:
+                product = Product.objects.get(id=item['id'])
+                total += product.price * item['quantity']
+            except Product.DoesNotExist:
+                continue
+        
+        # Очищаем корзину
+        request.session['cart'] = []
+        request.session.modified = True
+        
+        # Сохраняем данные о заказе
+        request.session['order_placed'] = True
+        request.session['order_details'] = {
+            'name': name,
+            'total': total,
+        }
+        
+        return redirect('order_success')
+    
+    return redirect('index')
+
+
+def order_success(request):
+    """Страница успешного оформления заказа"""
+    # Проверяем, был ли заказ оформлен
+    if not request.session.get('order_placed'):
+        return redirect('index')
+    
+    # Очищаем флаг
+    order_details = request.session.get('order_details', {})
+    request.session['order_placed'] = False
+    request.session['order_details'] = {}
+    
+    context = {
+        'name': order_details.get('name', 'Пользователь'),
+        'total': order_details.get('total', 0),
+    }
+    
+    return render(request, 'catalog/order_success.html', context)

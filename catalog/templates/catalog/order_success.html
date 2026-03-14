@@ -1,0 +1,43 @@
+<!-- catalog/templates/catalog/order_success.html -->
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заказ оформлен — FaunaMart</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'catalog/css/style.css' %}">
+</head>
+<body>
+    <header>
+        <div class="logo">FaunaMart</div>
+        <div>
+            Корзина (<span>0</span>)
+        </div>
+    </header>
+
+    <main style="display: flex; justify-content: center; align-items: center; min-height: 70vh;">
+        <div style="text-align: center; background: white; padding: 3rem; border-radius: 12px; border: 1px solid var(--beige); max-width: 500px;">
+            <div style="font-size: 5rem; margin-bottom: 1rem;">✅</div>
+            <h1 style="color: var(--primary); margin-bottom: 1rem;">Заказ оформлен!</h1>
+            <p style="color: var(--gray); margin-bottom: 2rem; font-size: 1.1rem;">
+                {{ name }}, спасибо за заказ!<br>
+                Сумма заказа: {{ total }} ₽
+            </p>
+            <p style="color: var(--gray); margin-bottom: 2rem;">
+                Это учебный проект, поэтому реальной оплаты не происходит.
+            </p>
+            <a href="{% url 'index' %}" style="text-decoration: none;">
+                <button style="background: var(--primary); color: white; border: none; padding: 1rem 2rem; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">
+                    Вернуться в каталог
+                </button>
+            </a>
+        </div>
+    </main>
+
+    <footer>
+        <p>Учебный проект. Виртуальная корзина, без реальной оплаты.</p>
+    </footer>
+</body>
+</html>
