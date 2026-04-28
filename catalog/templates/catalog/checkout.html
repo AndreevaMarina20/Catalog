@@ -1,5 +1,3 @@
-<!-- catalog/templates/catalog/checkout.html -->
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -31,7 +29,6 @@
             <h1 class="checkout-title">Оформление заказа</h1>
             
             {% if cart %}
-                <!-- Краткая информация о заказе -->
                 <div class="order-summary">
                     <h3 style="color: var(--dark); margin-bottom: 1rem;">Ваш заказ</h3>
                     {% for item in cart %}
@@ -45,7 +42,6 @@
                     </div>
                 </div>
                 
-                <!-- Форма оформления заказа -->
                 <form method="post" action="{% url 'place_order' %}">
                     {% csrf_token %}
                     
@@ -107,7 +103,6 @@
     </footer>
 
     <script>
-        // Простейшая валидация телефона (необязательно)
         document.querySelector('form')?.addEventListener('submit', function(e) {
             const phone = document.getElementById('phone')?.value;
             if (phone && phone.replace(/\D/g, '').length < 10) {

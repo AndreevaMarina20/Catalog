@@ -3,39 +3,36 @@ from django.http import HttpResponseRedirect, JsonResponse
 from .models import Product, Animal, Category
 
 def index(request):
-    # Получаем параметры фильтрации из GET-запроса
     animal_id = request.GET.get('animal')
     category_id = request.GET.get('category')
     sort_by = request.GET.get('sort', 'default')
+    search_query = request.GET.get('search', '')
     
-    # Базовый запрос всех товаров
-    products = Product.objects.all().select_related('animal', 'category')
+    products = list(Product.objects.all().select_related('animal', 'category'))
     
-    # Применяем фильтры если они есть
+    if search_query:
+        products = [p for p in products if search_query.lower() in p.name.lower()]
+    
     if animal_id and animal_id != 'all':
-        products = products.filter(animal_id=animal_id)
+        products = [p for p in products if str(p.animal.id) == animal_id]
     
     if category_id and category_id != 'all':
-        products = products.filter(category_id=category_id)
+        products = [p for p in products if str(p.category.id) == category_id]
     
-    # Применяем сортировку
     if sort_by == 'price_asc':
-        products = products.order_by('price')
+        products.sort(key=lambda x: x.price)
     elif sort_by == 'price_desc':
-        products = products.order_by('-price')
+        products.sort(key=lambda x: x.price, reverse=True)
     elif sort_by == 'name_asc':
-        products = products.order_by('name')
+        products.sort(key=lambda x: x.name)
     elif sort_by == 'name_desc':
-        products = products.order_by('-name')
+        products.sort(key=lambda x: x.name, reverse=True)
     
-    # Получаем все категории и животных для фильтров
     animals = Animal.objects.all()
     categories = Category.objects.all()
     
-    # Корзина хранится в сессии
     cart_data = request.session.get('cart', [])
     
-    # Получаем полные объекты товаров для корзины
     cart_items = []
     cart_count = 0
     cart_total = 0
@@ -63,16 +60,15 @@ def index(request):
         'selected_animal': animal_id,
         'selected_category': category_id,
         'sort_by': sort_by,
+        'search_query': search_query,
     }
     
     return render(request, 'catalog/index.html', context)
 
 
 def product_detail(request, product_id):
-    """Страница детального просмотра товара"""
     product = Product.objects.get(id=product_id)
     
-    # Корзина
     cart_data = request.session.get('cart', [])
     cart_items = []
     cart_count = 0
@@ -104,7 +100,6 @@ def product_detail(request, product_id):
 def add_to_cart(request, product_id):
     cart = request.session.get('cart', [])
     
-    # Проверяем, есть ли уже такой товар
     found = False
     for item in cart:
         if item['id'] == product_id:
@@ -121,10 +116,8 @@ def add_to_cart(request, product_id):
     request.session['cart'] = cart
     request.session.modified = True
     
-    # Подсчитываем общее количество товаров
     cart_count = sum(item['quantity'] for item in cart)
     
-    # Если это AJAX-запрос, возвращаем JSON
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse({
             'success': True,
@@ -135,10 +128,8 @@ def add_to_cart(request, product_id):
 
 
 def remove_from_cart(request, product_id):
-    """Удаление товара из корзины"""
     cart = request.session.get('cart', [])
     
-    # Удаляем товар
     cart = [item for item in cart if item['id'] != product_id]
     
     request.session['cart'] = cart
@@ -148,25 +139,19 @@ def remove_from_cart(request, product_id):
 
 
 def clear_cart(request):
-    """Очистка корзины"""
     request.session['cart'] = []
     request.session.modified = True
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
 def get_cart_items(request):
-    """Возвращает список ID товаров в корзине"""
     cart = request.session.get('cart', [])
     return JsonResponse({
         'items': [{'id': item['id'], 'quantity': item['quantity']} for item in cart]
     })
 
 
-# ========== НОВЫЕ ФУНКЦИИ ==========
-
 def checkout(request):
-    """Страница оформления заказа"""
-    # Корзина
     cart_data = request.session.get('cart', [])
     cart_items = []
     cart_count = 0
@@ -195,15 +180,12 @@ def checkout(request):
 
 
 def place_order(request):
-    """Обработка отправки заказа"""
     if request.method == 'POST':
-        # Получаем данные из формы
         name = request.POST.get('name')
         phone = request.POST.get('phone')
         email = request.POST.get('email')
         address = request.POST.get('address')
         
-        # Считаем сумму заказа ДО очистки корзины
         cart_data = request.session.get('cart', [])
         total = 0
         for item in cart_data:
@@ -213,11 +195,9 @@ def place_order(request):
             except Product.DoesNotExist:
                 continue
         
-        # Очищаем корзину
         request.session['cart'] = []
         request.session.modified = True
         
-        # Сохраняем данные о заказе
         request.session['order_placed'] = True
         request.session['order_details'] = {
             'name': name,
@@ -230,12 +210,9 @@ def place_order(request):
 
 
 def order_success(request):
-    """Страница успешного оформления заказа"""
-    # Проверяем, был ли заказ оформлен
     if not request.session.get('order_placed'):
         return redirect('index')
     
-    # Очищаем флаг
     order_details = request.session.get('order_details', {})
     request.session['order_placed'] = False
     request.session['order_details'] = {}

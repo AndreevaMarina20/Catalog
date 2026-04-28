@@ -1,5 +1,3 @@
-<!-- catalog/templates/catalog/index.html -->
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -13,21 +11,27 @@
 <body>
     <header>
         <div class="logo">FaunaMart</div>
-        <div>
-            Корзина (<span id="cart-count">{{ cart_count }}</span>)
-            <button onclick="document.getElementById('cart-modal').style.display='block'" class="cart-button">
-                Открыть корзину
-            </button>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <form method="get" action="" style="display: flex;">
+                <input type="text" name="search" value="{{ search_query }}" placeholder="Поиск товаров..." style="padding: 0.5rem 1rem; border: none; border-radius: 50px 0 0 50px; outline: none; width: 200px;">
+                <button type="submit" style="padding: 0.5rem 1rem; background: var(--beige); border: none; border-radius: 0 50px 50px 0; cursor: pointer;">🔍</button>
+            </form>
+            <div>
+                Корзина (<span id="cart-count">{{ cart_count }}</span>)
+                <button onclick="document.getElementById('cart-modal').style.display='block'" class="cart-button">
+                    Открыть корзину
+                </button>
+            </div>
         </div>
     </header>
 
     <nav>
-        <a href="?animal=all{% if selected_category and selected_category != 'all' %}&category={{ selected_category }}{% endif %}" 
+        <a href="?animal=all{% if selected_category and selected_category != 'all' %}&category={{ selected_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
            class="{% if selected_animal == 'all' or not selected_animal %}active{% endif %}">
             Все животные
         </a>
         {% for animal in animals %}
-        <a href="?animal={{ animal.id }}{% if selected_category and selected_category != 'all' %}&category={{ selected_category }}{% endif %}" 
+        <a href="?animal={{ animal.id }}{% if selected_category and selected_category != 'all' %}&category={{ selected_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
            class="{% if selected_animal == animal.id|stringformat:'s' %}active{% endif %}">
             {{ animal.name }}
         </a>
@@ -40,21 +44,21 @@
             <div class="filter-group">
                 <h4>Категория товаров</h4>
                 <div>
-                    <a href="?category=all{% if selected_animal and selected_animal != 'all' %}&animal={{ selected_animal }}{% endif %}" 
+                    <a href="?category=all{% if selected_animal and selected_animal != 'all' %}&animal={{ selected_animal }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
                        class="filter-link {% if not selected_category or selected_category == 'all' %}active-filter{% endif %}">
                         Все категории
                     </a>
                 </div>
                 {% for category in categories %}
                 <div>
-                    <a href="?category={{ category.id }}{% if selected_animal and selected_animal != 'all' %}&animal={{ selected_animal }}{% endif %}"
+                    <a href="?category={{ category.id }}{% if selected_animal and selected_animal != 'all' %}&animal={{ selected_animal }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
                        class="filter-link {% if selected_category == category.id|stringformat:'s' %}active-filter{% endif %}">
                         {{ category.name }}
                     </a>
                 </div>
                 {% endfor %}
             </div>
-            <a href="?" class="reset-button">Сбросить фильтры</a>
+            <a href="?{% if search_query %}search={{ search_query }}{% endif %}" class="reset-button">Сбросить фильтры</a>
         </aside>
 
         <section>
@@ -63,7 +67,6 @@
                 {% for product in products %}
                 <a href="{% url 'product_detail' product.id %}" style="text-decoration: none; color: inherit; display: block;">
                     <div class="product-card">
-                        <!-- ФОТО ТОВАРА -->
                         {% if product.image %}
                             <div class="product-image-container">
                                 <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
@@ -74,17 +77,14 @@
                             </div>
                         {% endif %}
                         
-                        <!-- БЕЙДЖ (если есть) -->
                         {% if product.badge %}
                             <div class="product-badge">{{ product.badge }}</div>
                         {% endif %}
                         
-                        <!-- ИНФОРМАЦИЯ О ТОВАРЕ -->
                         <div class="product-content">
                             <h3>{{ product.name }}</h3>
                             <p>{{ product.animal.name }} • {{ product.category.name }}</p>
                             <p class="product-price">{{ product.price }} ₽</p>
-                            <!-- Кнопка В корзину -->
                             <button onclick="event.preventDefault(); window.location.href='{% url 'add_to_cart' product.id %}?next={{ request.get_full_path|urlencode }}'">
                                 В корзину
                             </button>
@@ -100,7 +100,6 @@
         </section>
     </main>
 
-    <!-- Модальное окно корзины -->
     <div id="cart-modal" class="cart-modal">
         <div class="cart-header">
             <h2>Ваша корзина</h2>
@@ -127,7 +126,6 @@
                     Итого: {{ cart_total }} ₽
                 </div>
                 
-                <!-- ИСПРАВЛЕННАЯ ССЫЛКА -->
                 <a href="{% url 'checkout' %}" class="checkout-button">
                     <button>Оформить заказ</button>
                 </a>
@@ -142,7 +140,6 @@
     </footer>
 
     <script>
-        // Закрытие корзины при клике вне её
         window.onclick = function(event) {
             const modal = document.getElementById('cart-modal');
             if (event.target == modal) {
@@ -150,7 +147,6 @@
             }
         }
         
-        // Чтобы клик по кнопке "В корзину" не переходил по ссылке карточки
         document.querySelectorAll('.product-card button').forEach(button => {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
